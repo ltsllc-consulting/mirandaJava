@@ -44,8 +44,7 @@ public class TestSession extends TestCase {
     public static final String TEST_URL = "https://localhost";
     public static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
 
-    public void setupFile () {
-        File file = new File("truststore");
+    public void setupSession () {
         System.setProperty(TRUST_STORE_PROPERTY, "truststore");
 
         PrivateKey privateKey = null;
@@ -67,7 +66,7 @@ public class TestSession extends TestCase {
         super.setup();
 
         setuplog4j();
-        setupFile();
+        setupSession();
     }
 
     @Test
@@ -75,103 +74,5 @@ public class TestSession extends TestCase {
         getSession().connect();
 
         assert (getSession().getLoggedIn());
-    }
-
-
-    public boolean containsUser (String name, List<User> list) {
-        for (User user : list) {
-            if (name.equals(user.getName())) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public CreateResult createUser (String name, String description, String category)
-            throws GeneralSecurityException, IOException{
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-        PublicKey publicKey = new PublicKey(keyPair.getPublic());
-        String publicKeyPem = Utils.publicKeyToPemString(publicKey.getSecurityPublicKey());
-
-        CreateResult createResult = new CreateResult();
-        createResult.keyPair = keyPair;
-        createResult.result = getSession().createUser(name, description, category, publicKeyPem);
-
-        return createResult;
-    }
-
-
-    @Test
-    public void testCreateUser () throws Exception {
-        getSession().connect();
-        CreateResult createResult = createUser("stan","a test user", User.UserTypes.Publisher.toString());
-        assert (createResult.result == Results.Success);
-
-        Results result = getSession().deleteUser("stan");
-        assert (result == Results.Success);
-    }
-
-    @Test
-    public void testListUsers () throws Exception {
-        getSession().connect();;
-        List<User> userList = getSession().listUsers();
-        assert (userList != null);
-    }
-
-    public Results performDelete (String name) throws IOException {
-        return getSession().deleteUser(name);
-    }
-
-    @Test
-    public void testDeleteUser () throws Exception {
-        getSession().connect();
-
-        CreateResult createResult = createUser("stan", "a test user", User.UserTypes.Publisher.toString());
-        assert (createResult.result == Results.Success);
-
-        Results result = getSession().deleteUser("stan");
-        assert (result == Results.Success);
-    }
-
-    public User createUser () throws GeneralSecurityException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-
-        PublicKey publicKey = new PublicKey(keyPair.getPublic());
-        User user = new User("whatever", User.UserTypes.Publisher, "a test user", publicKey);
-        return user;
-    }
-
-    @Test
-    public void testModifyUser () throws Exception {
-        getSession().connect();
-
-        CreateResult createResult = createUser("stan", "a test user", User.UserTypes.Publisher.toString());
-
-        User user = createUser();
-        user.setName("stan");
-        user.setDescription("modify");
-
-        Results result = getSession().updateUser (user);
-        assert (result == Results.Success);
-
-        Session.RetrieveUserResult retrieveUserResult = getSession().retrieveUser("stan");
-        assert (retrieveUserResult.result == Results.Success);
-        assert (retrieveUserResult.user.getName().equals("stan"));
-        assert (retrieveUserResult.user.getDescription().equals("modify"));
-
-        result = getSession().deleteUser("stan");
-        assert (result == Results.Success);
-    }
-
-
-    public void whatever () throws Exception {
-        getSession().connect();
-        Results result = performDelete("stan");
-        assert (result == Results.Success);
     }
 }

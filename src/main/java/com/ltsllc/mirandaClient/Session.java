@@ -65,18 +65,30 @@ public class Session {
     private HttpClient httpClient;
     private String sessionId;
     private PrivateKey privateKey;
+    private UserOperations userOperations;
+    private TopicOperations topicOperations;
 
     public Session(User user, PrivateKey privateKey, String url) {
         this.user = user;
         this.privateKey = privateKey;
         this.url = url;
         this.httpClient = createHttpClient();
+        this.userOperations = new UserOperations(this);
+        this.topicOperations = new TopicOperations(this);
+    }
+
+    public TopicOperations getTopicOperations() {
+        return topicOperations;
     }
 
     public static Gson buildGson () {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(java.security.PublicKey.class, new JSPublicKeyCreator());
         return gsonBuilder.create();
+    }
+
+    public UserOperations getUserOperations() {
+        return userOperations;
     }
 
     public String getSessionId() {
@@ -113,6 +125,10 @@ public class Session {
 
     public boolean getLoggedIn () {
         return getSessionId() != null;
+    }
+
+    public static Gson getGson() {
+        return gson;
     }
 
     public <T> T getReply (HttpResponse httpResponse, Class<T> type) throws IOException {
@@ -187,120 +203,4 @@ public class Session {
         }
     }
 
-    public Results createUser (String name, String description, String category, String publicKeyPem) throws IOException {
-        UserObject userObject = new UserObject(name, category, description, publicKeyPem);
-        UserRequestObject userRequestObject = new UserRequestObject();
-        userRequestObject.setUserObject(userObject);
-        userRequestObject.setSessionIdString(getSessionId());
-        HttpPost post = new HttpPost(getUrl() + "/servlets/createUser");
-        String json = gson.toJson(userRequestObject);
-        StringEntity stringEntity = new StringEntity(json);
-        post.setEntity(stringEntity);
-        HttpResponse httpResponse = getHttpClient().execute(post);
-        ResultObject resultObject = getReply(httpResponse, ResultObject.class);
-
-        if (null == resultObject) {
-            return Results.SessionNotFound;
-        } else {
-            return resultObject.getResult();
-        }
-    }
-
-    public List<User> listUsers () throws IOException {
-        String url = getUrl() + "/servlets/getUsers";
-        UserRequestObject userRequestObject = new UserRequestObject();
-        userRequestObject.setSessionIdString(getSessionId());
-        HttpPost post = new HttpPost(url);
-        String json = gson.toJson(userRequestObject);
-        StringEntity stringEntity = new StringEntity(json);
-        post.setEntity(stringEntity);
-        HttpResponse httpResponse = getHttpClient().execute(post);
-        UserListResultObject userListResultObject = getReply(httpResponse, UserListResultObject.class);
-
-        if (null == userListResultObject) {
-            return null;
-        } else {
-            return userListResultObject.getUserList();
-        }
-    }
-
-    public Results deleteUser (String name) throws IOException {
-        String url = getUrl() + "/servlets/deleteUser";
-        UserRequestObject userRequestObject = new UserRequestObject();
-        userRequestObject.setSessionIdString(getSessionId());
-        UserObject userObject = new UserObject(name, null, null, null);
-        userRequestObject.setUserObject(userObject);
-        String json = gson.toJson(userRequestObject);
-
-        HttpPost httpPost = new HttpPost(url);
-        StringEntity stringEntity = new StringEntity(json);
-        httpPost.setEntity(stringEntity);
-
-        HttpResponse httpResponse = getHttpClient().execute(httpPost);
-        ResultObject resultObject = getReply(httpResponse, ResultObject.class);
-
-        if (null != resultObject) {
-            return resultObject.getResult();
-        } else {
-            return Results.SessionNotFound;
-        }
-    }
-
-    public Results updateUser (User user) throws IOException {
-        String url = getUrl() + "/servlets/updateUser";
-        UserRequestObject userRequestObject = new UserRequestObject();
-        userRequestObject.setSessionIdString(getSessionId());
-
-        UserObject userObject = new UserObject(user.getName(), user.getCategory().toString(), user.getDescription(),
-                user.getPublicKeyPem());
-
-        userRequestObject.setUserObject(userObject);
-
-        String json = gson.toJson(userRequestObject);
-        StringEntity stringEntity = new StringEntity(json);
-
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(stringEntity);
-
-        HttpResponse httpResponse = getHttpClient().execute(httpPost);
-        ResultObject resultObject = getReply(httpResponse, ResultObject.class);
-
-        if (resultObject == null) {
-            return Results.SessionNotFound;
-        } else {
-            return resultObject.getResult();
-        }
-    }
-
-
-    public RetrieveUserResult retrieveUser (String name) throws IOException {
-        String url = getUrl() + "/servlets/getUser";
-
-        UserRequestObject userRequestObject = new UserRequestObject();
-        userRequestObject.setSessionIdString(getSessionId());
-
-        UserObject userObject = new UserObject(name, null, null, null);
-        userRequestObject.setUserObject(userObject);
-
-        String json = gson.toJson(userRequestObject);
-
-        StringEntity stringEntity = new StringEntity(json);
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(stringEntity);
-
-        HttpResponse httpResponse = getHttpClient().execute(httpPost);
-
-        GetUserResponseObject getUserResponseObject = getReply(httpResponse, GetUserResponseObject.class);
-
-        RetrieveUserResult retrieveUserResult = new RetrieveUserResult();
-
-        if (null == getUserResponseObject) {
-            retrieveUserResult.result = Results.SessionNotFound;
-        } else {
-            retrieveUserResult.result = getUserResponseObject.getResult();
-            retrieveUserResult.user = getUserResponseObject.getUserObject();
-        }
-
-        return retrieveUserResult;
-    }
 }
