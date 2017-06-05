@@ -37,8 +37,11 @@ public class Panic extends Exception {
         ErrorLoadingFile,
         ExceptionCalculatingSha1,
         ExceptionCreatingSslContext,
+        ExceptionDecrypting,
+        ExceptionDuringInstantiation,
         ExceptionDuringNetworkSend, // an InterruptedException was thrown while waiting for a network to complete
         ExceptionDuringNewConnection,
+        ExceptionEncrypting,
         ExceptionGettingNextMessage, // an InterruptedException was thrown while waiting for the next message
         ExceptionInProcessMessage, // an unchecked exception was thrown in processMessage
         ExceptionInRun, // an unchecked exception was thrown in a Consumers run method
@@ -48,6 +51,7 @@ public class Panic extends Exception {
         ExceptionReceivingMessage,
         ExceptionReadingFile,
         ExceptionSendingMessage,
+        ExceptionStartingServlets,
         ExceptionTryingToCalculateVersion, // an exception was thrown while calculating a new version.
         ExceptionTryingToRectify,
         ExceptionWaitingForNextConnection, // an exception was thrown while waiting for a new node
@@ -61,7 +65,8 @@ public class Panic extends Exception {
         Test,
         UncheckedException, // an unchecked exception was thrown
         UnknownUser, // we were told to update a user that doesn't exist
-        UnrecognizedNode // a node shut down that we don't have a record of
+        UnrecognizedNode, // a node shut down that we don't have a record of
+        UnrecognizedResult
     }
 
     private Reasons reason;

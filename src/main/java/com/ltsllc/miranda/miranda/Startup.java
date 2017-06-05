@@ -23,6 +23,7 @@ import com.ltsllc.miranda.deliveries.DeliveryManager;
 import com.ltsllc.miranda.event.EventManager;
 import com.ltsllc.miranda.file.FileWatcherService;
 import com.ltsllc.miranda.http.HttpServer;
+import com.ltsllc.miranda.http.SetupServletsMessage;
 import com.ltsllc.miranda.miranda.messages.GarbageCollectionMessage;
 import com.ltsllc.miranda.miranda.states.ReadyState;
 import com.ltsllc.miranda.network.Network;
@@ -56,6 +57,7 @@ import com.ltsllc.miranda.util.Utils;
 import com.ltsllc.miranda.writer.Writer;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -267,6 +269,7 @@ public class Startup extends State {
             startSubsystems();
             loadFiles();
             setupSchedule();
+            setupHttpServer();
             setupServlets();
             startHttpServer();
             startListening();
@@ -455,7 +458,7 @@ public class Startup extends State {
         ShutdownHolder.initialize(timeoutPeriod);
         ShutdownHolder.getInstance().start();
 
-        Miranda.getInstance().getHttpServer().sendSetupServletsMessage(getMiranda().getQueue(), this, mappings);
+        getMiranda().getHttpServer().addServlets(mappings);
     }
 
 
@@ -503,6 +506,7 @@ public class Startup extends State {
     private void startLogger() {
         DOMConfigurator.configure(getLogConfigurationFile());
         logger = Logger.getLogger(Startup.class);
+        Miranda.setLogger(logger);
     }
 
     public void processCommandLine() {
@@ -547,6 +551,16 @@ public class Startup extends State {
         Miranda.properties.updateSystemProperties();
 
         this.properties = Miranda.properties;
+
+        String trustStoreFilename = getProperties().getProperty(MirandaProperties.PROPERTY_TRUST_STORE_FILENAME);
+        File file = new File (trustStoreFilename);
+        if (!file.exists()) {
+            StartupPanic startupPanic = new StartupPanic("trustore, " + trustStoreFilename + ", does not exist",
+                    StartupPanic.StartupReasons.TrustStoreMissing);
+            Miranda.panicMiranda(startupPanic);
+        }
+
+        System.setProperty("javax.net.ssl.trustStore", trustStoreFilename);
     }
 
     public void startSubsystems() throws MirandaException {
@@ -586,7 +600,7 @@ public class Startup extends State {
         try {
             MirandaFactory factory = getMiranda().factory;
             HttpServer httpServer = factory.buildHttpServer();
-            Miranda.getInstance().setHttpServer(httpServer);
+            getMiranda().setHttpServer(httpServer);
             setHttpServer(httpServer);
         } catch (MirandaException e) {
             Panic panic = new StartupPanic("Exception trying to create http server", e, StartupPanic.StartupReasons.ExceptionCreatingHttpServer);
@@ -677,8 +691,8 @@ public class Startup extends State {
         return filename;
     }
 
-    public void startHttpServer() {
-        Miranda.getInstance().getHttpServer().sendStart(getMiranda().getQueue());
+    public void startHttpServer() throws MirandaException {
+        getMiranda().getHttpServer().sendStart(getMiranda().getQueue());
     }
 
     public void definePanicPolicy() {

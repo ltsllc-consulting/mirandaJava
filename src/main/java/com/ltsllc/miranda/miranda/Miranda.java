@@ -38,6 +38,7 @@ import com.ltsllc.miranda.property.NewPropertiesMessage;
 import com.ltsllc.miranda.reader.Reader;
 import com.ltsllc.miranda.servlet.property.Property;
 import com.ltsllc.miranda.servlet.status.GetStatusMessage;
+import com.ltsllc.miranda.servlet.status.StatusObject;
 import com.ltsllc.miranda.session.AddSessionMessage;
 import com.ltsllc.miranda.session.Session;
 import com.ltsllc.miranda.session.SessionManager;
@@ -76,7 +77,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  */
 public class Miranda extends Consumer {
-    public static final String NAME = "com/ltsllc/miranda";
+    public static final String NAME = "miranda";
 
     private static Logger logger = Logger.getLogger(Miranda.class);
     private static Miranda ourInstance;
@@ -192,7 +193,11 @@ public class Miranda extends Consumer {
     }
 
     public static Logger getLogger () {
-        return logger;
+        return Miranda.logger;
+    }
+
+    public static void setLogger (Logger logger) {
+        Miranda.logger = logger;
     }
 
     public HttpServer getHttpServer() {
@@ -310,6 +315,7 @@ public class Miranda extends Consumer {
     public static void main(String[] argv) {
         logger.info ("Starting");
         Miranda miranda = new Miranda(argv);
+        Miranda.ourInstance = miranda;
         miranda.start();
     }
 
@@ -398,7 +404,7 @@ public class Miranda extends Consumer {
         send(getStatusMessage, getQueue());
     }
 
-    public com.ltsllc.miranda.StatusObject getStatusImpl () {
+    public StatusObject getStatusImpl () {
         MirandaProperties properties = Miranda.properties;
 
         String localDns = properties.getProperty(MirandaProperties.PROPERTY_MY_DNS);
@@ -407,13 +413,11 @@ public class Miranda extends Consumer {
         String localDescription = properties.getProperty(MirandaProperties.PROPERTY_MY_DESCIPTION);
 
         NodeElement local = new NodeElement(localDns, localIp, localPort, localDescription);
-        // List<Property> list = properties.asPropertyList();
+        List<Property> list = properties.asPropertyList();
 
-        // com.ltsllc.miranda.StatusObject statusObject = new com.ltsllc.miranda.StatusObject(local, null, null);
-        // com.ltsllc.miranda.StatusObject statusObject = new com.ltsllc.miranda.StatusObject(local, list, null);
+        StatusObject statusObject = new StatusObject(local, list, null);
 
-        // return statusObject;
-        return null;
+        return statusObject;
     }
 
     public void sendNewProperties (BlockingQueue<Message> senderQueue, Object sender, MirandaProperties mirandaProperties) {

@@ -16,6 +16,7 @@
 
 package com.ltsllc.miranda.util;
 
+import com.ltsllc.miranda.StartupPanic;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -31,6 +32,7 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 
+import javax.crypto.CipherInputStream;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -244,6 +246,36 @@ public class Utils {
     }
 
 
+    public static String inputStreamToString (InputStream inputStream) throws IOException {
+        StringWriter stringWriter = new StringWriter();
+
+        int b = inputStream.read();
+        while (-1 != b) {
+            String stringByte = byteToHexString((byte) b);
+            stringWriter.write(stringByte);
+        }
+
+        stringWriter.close();
+        return stringWriter.toString();
+    }
+
+
+    public static String cipherStreamToString (CipherInputStream cipherInputStream) throws IOException {
+        StringWriter stringWriter = new StringWriter();
+
+        int b = cipherInputStream.read();
+        while (-1 != b) {
+            String stringByte = byteToHexString((byte) b);
+            stringWriter.write(stringByte);
+            b = cipherInputStream.read();
+        }
+
+        stringWriter.close();
+        return stringWriter.toString();
+
+    }
+
+
     public static byte[] hexStringToBytes(String hexString) throws IOException {
         StringReader reader = null;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -401,7 +433,7 @@ public class Utils {
         return byteBuffer.array();
     }
 
-    public static PublicKey pemStringToPublicKey (String pemString) {
+    public static java.security.PublicKey pemStringToPublicKey (String pemString) {
         try {
             StringReader stringReader = new StringReader(pemString);
             PEMParser pemParser = new PEMParser(stringReader);
@@ -413,7 +445,7 @@ public class Utils {
         }
     }
 
-    public static String publicKeyToPemString (PublicKey publicKey) {
+    public static String publicKeyToPemString (java.security.PublicKey publicKey) {
         try {
             StringWriter stringWriter = new StringWriter();
             PEMWriter pemWriter = new PEMWriter(stringWriter);

@@ -23,6 +23,7 @@ import com.ltsllc.miranda.StartupPanic;
 import com.ltsllc.miranda.commadline.MirandaCommandLine;
 import com.ltsllc.miranda.file.MirandaFile;
 import com.ltsllc.miranda.miranda.Miranda;
+import com.ltsllc.miranda.servlet.property.Property;
 import com.ltsllc.miranda.util.PropertiesUtils;
 import com.ltsllc.miranda.util.Utils;
 import org.apache.log4j.Logger;
@@ -422,8 +423,8 @@ public class MirandaProperties {
         List<Property> list = new ArrayList<Property>(properties.size());
         for (String name : properties.stringPropertyNames()) {
             String value = properties.getProperty(name);
-            // Property property = new Property(name, value);
-            // list.add(property);
+            Property property = new Property(name, value);
+            list.add(property);
         }
 
         return list;

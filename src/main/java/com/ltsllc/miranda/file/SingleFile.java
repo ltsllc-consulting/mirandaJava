@@ -26,10 +26,10 @@ import com.ltsllc.miranda.deliveries.Comparer;
 import com.ltsllc.miranda.file.messages.*;
 import com.ltsllc.miranda.miranda.Miranda;
 import com.ltsllc.miranda.reader.Reader;
+import com.ltsllc.miranda.util.Utils;
 import org.apache.log4j.Logger;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -92,15 +92,21 @@ abstract public class SingleFile<E extends Updateable<E> & Matchable<E>> extends
     }
 
     public void setData (byte[] data) {
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
-        InputStreamReader inputStreamReader = null;
+        if (null == data) {
+            this.data = new ArrayList();
+        } else {
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
+            InputStreamReader inputStreamReader = null;
 
-        try {
-            inputStreamReader = new InputStreamReader(byteArrayInputStream);
-            data = getGson().fromJson(inputStreamReader, listType());
-        } catch (Exception e) {
-            Panic panic = new Panic("Exception loading list", e, Panic.Reasons.ExceptionLoadingFile);
-            Miranda.panicMiranda(panic);
+            try {
+                inputStreamReader = new InputStreamReader(byteArrayInputStream);
+                this.data = getGson().fromJson(inputStreamReader, listType());
+            } catch (Exception e) {
+                Panic panic = new Panic("Exception loading list", e, Panic.Reasons.ExceptionLoadingFile);
+                Miranda.panicMiranda(panic);
+            } finally {
+                Utils.closeIgnoreExceptions(inputStreamReader);
+            }
         }
     }
 

@@ -307,10 +307,10 @@ public class ReadyState extends State {
     }
 
     private State processGetStatusMessage (GetStatusMessage getStatusMessage) {
-        // StatusObject statusObject = getMiranda().getStatusImpl();
+        StatusObject statusObject = getMiranda().getStatusImpl();
 
-        // GetStatusResponseMessage response = new GetStatusResponseMessage(getMiranda().getQueue(), this, statusObject);
-        // getStatusMessage.reply(response);
+        GetStatusResponseMessage response = new GetStatusResponseMessage(getMiranda().getQueue(), this, statusObject);
+        getStatusMessage.reply(response);
 
         return this;
     }

@@ -27,6 +27,7 @@ import com.ltsllc.miranda.network.Network;
 import com.ltsllc.miranda.node.networkMessages.NetworkMessage;
 import com.ltsllc.miranda.node.networkMessages.WireMessage;
 import com.ltsllc.miranda.property.MirandaProperties;
+import com.ltsllc.miranda.reader.Reader;
 import com.ltsllc.miranda.servlet.ServletHolder;
 import com.ltsllc.miranda.servlet.cluster.ClusterStatusObject;
 import com.ltsllc.miranda.servlet.status.NodeStatus;
@@ -241,7 +242,7 @@ public class TestCase {
         return mockCluster;
     }
 
-    public com.ltsllc.miranda.reader.Reader getMockReader() {
+    public Reader getMockReader() {
         return mockReader;
     }
 
@@ -407,7 +408,7 @@ public class TestCase {
         this.mockMirandaFactory = mock(MirandaFactory.class);
         this.mockFileWatcher = mock(FileWatcher.class);
         this.mockFileWatcherService = mock(FileWatcherService.class);
-        this.mockReader = mock(com.ltsllc.miranda.reader.Reader.class);
+        this.mockReader = mock(Reader.class);
         this.mockServletHolder = mock(ServletHolder.class);
         this.mockSubscriptionManager = mock(SubscriptionManager.class);
         this.mockHttpServer = mock(HttpServer.class);
@@ -843,7 +844,6 @@ public class TestCase {
     }
 
     public void setupMockWriter() {
-        Writer.setInstance(getMockWriter());
         Miranda.getInstance().setWriter(getMockWriter());
     }
 

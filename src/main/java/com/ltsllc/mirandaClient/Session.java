@@ -4,9 +4,14 @@ package com.ltsllc.mirandaClient;
 import com.google.gson.Gson;
 import com.ltsllc.miranda.PrivateKey;
 import com.ltsllc.miranda.PublicKey;
+import com.ltsllc.miranda.Results;
 import com.ltsllc.miranda.servlet.login.LoginHolder;
 import com.ltsllc.miranda.servlet.login.LoginObject;
 import com.ltsllc.miranda.servlet.login.LoginResultObject;
+import com.ltsllc.miranda.servlet.objects.RequestObject;
+import com.ltsllc.miranda.servlet.objects.ResultObject;
+import com.ltsllc.miranda.servlet.user.UserObject;
+import com.ltsllc.miranda.servlet.user.UserRequestObject;
 import com.ltsllc.miranda.user.User;
 import com.ltsllc.miranda.util.Utils;
 import org.apache.http.HttpResponse;
@@ -23,6 +28,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.log4j.Logger;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -39,6 +45,7 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Session {
     private static Gson gson = new Gson();
+    private static Logger logger = Logger.getLogger(Session.class);
 
     private String url;
     private User user;
@@ -50,7 +57,7 @@ public class Session {
         this.user = user;
         this.privateKey = privateKey;
         this.url = url;
-        this.httpClient = HttpClients.createDefault();
+        this.httpClient = createHttpClient();
     }
 
     public String getSessionId() {
@@ -66,7 +73,6 @@ public class Session {
     }
 
     public User getUser() {
-
         return user;
     }
 
@@ -84,6 +90,10 @@ public class Session {
 
     public PrivateKey getPrivateKey() {
         return privateKey;
+    }
+
+    public boolean getLoggedIn () {
+        return getSessionId() != null;
     }
 
     public <T> T getReply (HttpResponse httpResponse, Class<T> type) throws IOException {
@@ -109,13 +119,7 @@ public class Session {
         }
     }
 
-    public void connect () throws IOException, GeneralSecurityException {
-        String url = getUrl() + "/servlets/login";
-
-        url = "https://localhost/servlets/login";
-
-        // org.apache.http.conn.ssl.SSLConnectionSocketFactory
-
+    public HttpClient createHttpClient () {
         HostnameVerifier hostnameVerifier = new CustomHostnameVerifier();
         HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
 
@@ -135,10 +139,18 @@ public class Session {
 
         final PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
         cm.setMaxTotal(100);
-        httpClient = HttpClients.custom()
+        return HttpClients.custom()
                 .setSSLSocketFactory(sslsf)
                 .setConnectionManager(cm)
                 .build();
+    }
+
+    public void connect () throws IOException, GeneralSecurityException {
+        String url = getUrl() + "/servlets/login";
+
+        url = "https://localhost/servlets/login";
+
+        // org.apache.http.conn.ssl.SSLConnectionSocketFactory
 
 
         HttpPost post = new HttpPost(url);
@@ -149,7 +161,30 @@ public class Session {
         post.setEntity(stringEntity);
         HttpResponse httpResponse = httpClient.execute(post);
         LoginResultObject loginResultObject = getReply(httpResponse, LoginResultObject.class);
-        byte[] plainText = getPrivateKey().decrypt(loginResultObject.getSession().getBytes());
-        this.sessionId = new String(plainText);
+        if (loginResultObject.getResult() == Results.Success) {
+            byte[] plainText = getPrivateKey().decrypt(loginResultObject.getEncryptedMessage());
+            this.sessionId = new String(plainText);
+            logger.info ("Successfully logged in");
+        }
+    }
+
+    public boolean createUser (String name, String description, String category, String publicKeyPem) throws IOException {
+        UserObject userObject = new UserObject(name, category, description, publicKeyPem);
+        UserRequestObject userRequestObject = new UserRequestObject();
+        userRequestObject.setUserObject(userObject);
+        userRequestObject.setSessionIdString(getSessionId());
+        HttpPost post = new HttpPost(getUrl() + "/servlets/createUser");
+        String json = gson.toJson(userRequestObject);
+        StringEntity stringEntity = new StringEntity(json);
+        post.setEntity(stringEntity);
+        HttpResponse httpResponse = getHttpClient().execute(post);
+        ResultObject resultObject = getReply(httpResponse, ResultObject.class);
+        boolean result = false;
+        if (resultObject.getResult() == Results.Success) {
+            logger.info ("Created " + name);
+            result = true;
+        }
+
+        return result;
     }
 }

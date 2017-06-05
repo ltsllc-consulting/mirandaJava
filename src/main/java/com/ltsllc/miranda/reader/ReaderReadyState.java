@@ -17,7 +17,11 @@
 package com.ltsllc.miranda.reader;
 
 import com.ltsllc.miranda.Message;
+import com.ltsllc.miranda.Results;
 import com.ltsllc.miranda.State;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 /**
  * Created by Clark on 5/3/2017.
@@ -51,10 +55,22 @@ public class ReaderReadyState extends State {
     }
 
     public State processReadMessage (ReadMessage readMessage) {
-        Reader.ReadResult result = getReader().read(readMessage.getFilename());
+        ReadResponseMessage response = new ReadResponseMessage(getReader().getQueue(), this);
+        response.setFilename(readMessage.getFilename());
 
-        ReadResponseMessage response = new ReadResponseMessage(getReader().getQueue(), this, result.result,
-                result.data);
+        try {
+            Reader.ReadResult readResult = getReader().read(readMessage.getFilename());
+            response.setResult(readResult.result);
+
+            if (readResult.result == Results.Success) {
+                response.setData(readResult.data);
+            } else if (readResult.result == Results.Exception) {
+                response.setException(readResult.exception);
+            }
+        } catch (GeneralSecurityException | IOException e) {
+            response.setResult(Results.Exception);
+            response.setException(e);
+        }
 
         readMessage.reply(response);
 
