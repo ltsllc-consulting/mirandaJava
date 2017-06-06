@@ -44,7 +44,7 @@ public class TestSession extends TestCase {
     public static final String TEST_URL = "https://localhost";
     public static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
 
-    public void setupSession () {
+    public void setupSession () throws GeneralSecurityException, IOException {
         System.setProperty(TRUST_STORE_PROPERTY, "truststore");
 
         PrivateKey privateKey = null;
@@ -57,6 +57,8 @@ public class TestSession extends TestCase {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        session.connect();
     }
 
     @Before
@@ -66,13 +68,16 @@ public class TestSession extends TestCase {
         super.setup();
 
         setuplog4j();
-        setupSession();
+
+        try {
+            setupSession();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     public void testLogin () throws Exception {
-        getSession().connect();
-
         assert (getSession().getLoggedIn());
     }
 }

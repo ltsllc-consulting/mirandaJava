@@ -10,6 +10,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
+import javax.xml.transform.Result;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,10 @@ public class TopicOperations extends Operations{
         public Topic topic;
     }
 
+    public static class ListingResult {
+        public Results result;
+        public List<Topic> list;
+    }
 
     public TopicOperations (Session session) {
         super(session);
@@ -73,18 +78,30 @@ public class TopicOperations extends Operations{
     }
 
 
-    public List<Topic> listTopics () throws IOException {
-        String url = getUrl() + "/servlets/getTopicas";
+    public ListingResult listTopics () throws IOException {
+        String url = getUrl() + "/servlets/getTopics";
         HttpPost httpPost = new HttpPost(url);
+
+        TopicRequestObject topicRequestObject = new TopicRequestObject();
+        topicRequestObject.setSessionIdString(getSessionId());
+        String json = getGson().toJson(topicRequestObject);
+        StringEntity stringEntity = new StringEntity(json);
+        httpPost.setEntity(stringEntity);
 
         HttpResponse httpResponse = getHttpClient().execute(httpPost);
         TopicsResultObject topicsResultObject = getReply(httpResponse, TopicsResultObject.class);
 
+        ListingResult listingResult = new ListingResult();
+
         if (null == topicsResultObject) {
-            return new ArrayList<Topic>();
+            listingResult.result = Results.SessionNotFound;
+            listingResult.list = new ArrayList<Topic>();
         } else {
-            return topicsResultObject.getTopicList();
+            listingResult.result = topicsResultObject.getResult();
+            listingResult.list = topicsResultObject.getTopicList();
         }
+
+        return listingResult;
     }
 
     public Results deleteTopic (Topic topic) throws IOException {
@@ -107,6 +124,29 @@ public class TopicOperations extends Operations{
         } else {
             return resultObject.getResult();
         }
+    }
+
+    public Results updateTopic (Topic topic) throws IOException {
+        String url = getUrl() + "/servlets/updateTopic";
+        HttpPost httpPost = new HttpPost(url);
+
+        TopicRequestObject topicRequestObject = new TopicRequestObject();
+        topicRequestObject.setSessionIdString(getSessionId());
+        topicRequestObject.setTopic(topic);
+        String json = getGson().toJson(topicRequestObject);
+
+        StringEntity stringEntity = new StringEntity(json);
+        httpPost.setEntity(stringEntity);
+
+        HttpResponse httpResponse = getHttpClient().execute(httpPost);
+        ResultObject resultObject = getReply(httpResponse, ResultObject.class);
+
+        if (null == resultObject) {
+            return Results.SessionNotFound;
+        } else {
+            return resultObject.getResult();
+        }
+
     }
 
 }

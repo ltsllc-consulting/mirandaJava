@@ -29,7 +29,12 @@ public class TestTopicOperations extends TestSession {
 
         super.setup();
 
-        topicOperations = getSession().getTopicOperations();
+        try {
+            getSession().connect();
+            topicOperations = getSession().getTopicOperations();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static String TEST_TOPIC_NAME = "whatever";
@@ -37,28 +42,62 @@ public class TestTopicOperations extends TestSession {
 
 
     public void whatever () throws Exception {
-        getSession().connect();
         Topic topic = new Topic(TEST_TOPIC_NAME, TEST_TOPIC_OWNER, Topic.RemotePolicies.None);
         Results result = getTopicOperations().deleteTopic(topic);
         assert (result == Results.Success);
     }
 
-    @Test
-    public void testCreate () throws Exception {
-        getSession().connect();
-
+    public void setupTopic () throws Exception {
         Topic topic = new Topic(TEST_TOPIC_NAME, TEST_TOPIC_OWNER, Topic.RemotePolicies.None);
         Results result = getTopicOperations().createTopic(topic);
-        assert (result == Results.Success);
 
-        result = getTopicOperations().deleteTopic (topic);
-        assert (result == Results.Success);
+        assert (result == Results.Success || result == Results.Duplicate);
+    }
+
+    public void deleteTopic () throws Exception {
+        Topic topic = new Topic(TEST_TOPIC_NAME, TEST_TOPIC_OWNER, Topic.RemotePolicies.None);
+        Results result = getTopicOperations().deleteTopic(topic);
+
+        assert (result == Results.Success || result == Results.TopicNotFound);
+    }
+
+    @Test
+    public void testCreate () throws Exception {
+        setupTopic();
+        deleteTopic();
     }
 
     @Test
     public void testGet () throws Exception {
+        setupTopic();
+
         Topic topic = new Topic(TEST_TOPIC_NAME);
         TopicOperations.RetrieveResults retrieveResults = getTopicOperations().retrieveTopic(topic);
         assert (retrieveResults.result == Results.Success);
+
+        deleteTopic();
+    }
+
+    @Test
+    public void testUpdate () throws Exception {
+        setupTopic();
+
+        Topic topic = new Topic(TEST_TOPIC_NAME, "admin", Topic.RemotePolicies.Acknowledged);
+        Results result = getTopicOperations().updateTopic (topic);
+        assert (result == Results.Success);
+
+        deleteTopic();
+    }
+
+    @Test
+    public void testList () throws Exception {
+        setupTopic();
+
+        TopicOperations.ListingResult listingResult = getTopicOperations().listTopics();
+
+        assert (listingResult.result == Results.Success);
+        assert (listingResult.list.size() > 0);
+
+        deleteTopic();
     }
 }
