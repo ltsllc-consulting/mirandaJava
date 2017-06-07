@@ -89,40 +89,28 @@ public class PrivateKey extends Key {
         return buffer;
     }
 
-    public SecretKeySpec getSecretKey (EncryptedMessage encryptedMessage) throws GeneralSecurityException, IOException{
+    public byte[] decrypt (EncryptedMessage encryptedMessage) throws GeneralSecurityException, IOException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, getSecurityPrivateKey());
-        byte[] cipherTextKey = Utils.hexStringToBytes(encryptedMessage.getKey());
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(cipherTextKey);
-        CipherInputStream cipherInputStream = new CipherInputStream(byteArrayInputStream, cipher);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        int b = cipherInputStream.read();
-        while (b != -1) {
-            byteArrayOutputStream.write(b);
-            b = cipherInputStream.read();
-        }
-
-        return new SecretKeySpec(byteArrayOutputStream.toByteArray(), "AES");
-    }
-
-    public byte[] getMessage (SecretKeySpec secretKeySpec, EncryptedMessage encryptedMessage) throws GeneralSecurityException, IOException {
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
         byte[] cipherText = Utils.hexStringToBytes(encryptedMessage.getMessage());
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(cipherText);
-        CipherInputStream cipherInputStream = new CipherInputStream(byteArrayInputStream, cipher);
+        byte[] encryptedKey = Utils.hexStringToBytes(encryptedMessage.getKey());
+        byte[] plainTextKey = cipher.doFinal(encryptedKey);
+
+        cipher = Cipher.getInstance("AES");
+        SecretKeySpec secretKeySpec = new SecretKeySpec(plainTextKey, "AES");
+
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        int b = cipherInputStream.read();
-        while (-1 != b) {
-            byteArrayOutputStream.write(b);
-            b = cipherInputStream.read();
+        CipherOutputStream cipherOutputStream = new CipherOutputStream(byteArrayOutputStream, cipher);
+
+        try {
+            cipherOutputStream.write(cipherText);
+            cipherOutputStream.close();
+        } catch (IOException e) {
+            Panic panic = new Panic("Exception decrypting", e, Panic.Reasons.ExceptionDecrypting);
+            Miranda.panicMiranda(panic);
         }
 
         return byteArrayOutputStream.toByteArray();
-    }
-
-    public byte[] decrypt (EncryptedMessage encryptedMessage) throws GeneralSecurityException, IOException {
-        SecretKeySpec secretKeySpec = getSecretKey(encryptedMessage);
-        return getMessage(secretKeySpec, encryptedMessage);
     }
 }

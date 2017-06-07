@@ -4,24 +4,14 @@ package com.ltsllc.mirandaClient;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.ltsllc.miranda.PrivateKey;
-import com.ltsllc.miranda.PublicKey;
 import com.ltsllc.miranda.Results;
-import com.ltsllc.miranda.servlet.login.LoginHolder;
 import com.ltsllc.miranda.servlet.login.LoginObject;
 import com.ltsllc.miranda.servlet.login.LoginResultObject;
-import com.ltsllc.miranda.servlet.objects.RequestObject;
-import com.ltsllc.miranda.servlet.objects.ResultObject;
-import com.ltsllc.miranda.servlet.user.GetUserResponseObject;
-import com.ltsllc.miranda.servlet.user.UserListResultObject;
-import com.ltsllc.miranda.servlet.user.UserObject;
-import com.ltsllc.miranda.servlet.user.UserRequestObject;
-import com.ltsllc.miranda.user.JSPublicKeyCreator;
+import com.ltsllc.miranda.user.JSPublicKeySerializer;
 import com.ltsllc.miranda.user.User;
 import com.ltsllc.miranda.util.Utils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -34,7 +24,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.log4j.Logger;
 
-import javax.crypto.KeyGenerator;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -42,20 +31,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 
 /**
  * Created by Clark on 6/2/2017.
  */
 public class Session {
-    public static class RetrieveUserResult {
-        public Results result;
-        public UserObject user;
-    }
-
     private static Gson gson = buildGson();
 
     private static Logger logger = Logger.getLogger(Session.class);
@@ -67,6 +50,7 @@ public class Session {
     private PrivateKey privateKey;
     private UserOperations userOperations;
     private TopicOperations topicOperations;
+    private SubscriptionOperations subscriptionOperations;
 
     public Session(User user, PrivateKey privateKey, String url) {
         this.user = user;
@@ -75,6 +59,11 @@ public class Session {
         this.httpClient = createHttpClient();
         this.userOperations = new UserOperations(this);
         this.topicOperations = new TopicOperations(this);
+        this.subscriptionOperations = new SubscriptionOperations(this);
+    }
+
+    public SubscriptionOperations getSubscriptionOperations() {
+        return subscriptionOperations;
     }
 
     public TopicOperations getTopicOperations() {
@@ -83,7 +72,7 @@ public class Session {
 
     public static Gson buildGson () {
         GsonBuilder gsonBuilder = new GsonBuilder();
-        gsonBuilder.registerTypeAdapter(java.security.PublicKey.class, new JSPublicKeyCreator());
+        gsonBuilder.registerTypeAdapter(java.security.PublicKey.class, new JSPublicKeySerializer());
         return gsonBuilder.create();
     }
 
@@ -131,7 +120,7 @@ public class Session {
         return gson;
     }
 
-    public <T> T getReply (HttpResponse httpResponse, Class<T> type) throws IOException {
+    public <T> T getReply (HttpResponse httpResponse, Type type) throws IOException {
         InputStream inputStream = null;
         InputStreamReader inputStreamReader = null;
 
@@ -147,7 +136,8 @@ public class Session {
 
             String json = new String(byteArrayOutputStream.toByteArray());
 
-            return gson.fromJson(json, type);
+            Object object = getGson().fromJson(json, type);
+            return (T) object;
         } finally {
             Utils.closeIgnoreExceptions(inputStream);
             Utils.closeIgnoreExceptions(inputStreamReader);
@@ -182,11 +172,6 @@ public class Session {
 
     public void connect () throws IOException, GeneralSecurityException {
         String url = getUrl() + "/servlets/login";
-
-        url = "https://localhost/servlets/login";
-
-        // org.apache.http.conn.ssl.SSLConnectionSocketFactory
-
 
         HttpPost post = new HttpPost(url);
         LoginObject loginObject = new LoginObject();

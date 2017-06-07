@@ -2,9 +2,13 @@ package com.ltsllc.mirandaClient;
 
 import com.ltsllc.miranda.PublicKey;
 import com.ltsllc.miranda.Results;
+import com.ltsllc.miranda.servlet.ListObject;
+import com.ltsllc.miranda.servlet.ReadObject;
 import com.ltsllc.miranda.test.TestCase;
 import com.ltsllc.miranda.user.User;
 import com.ltsllc.miranda.util.Utils;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -18,121 +22,107 @@ import java.util.List;
  */
 public class TestUserOperations extends TestSession {
     private UserOperations userOperations;
+    private User user;
+
+    public User getUser() {
+        return user;
+    }
 
     public UserOperations getUserOperations() {
         return userOperations;
     }
 
-    public void reset () {
+    public void reset() {
         super.reset();
 
         userOperations = null;
     }
 
-    public void setup () {
+    @Before
+    public void setup() {
         reset();
 
         super.setup();
 
-        userOperations = getSession().getUserOperations();
+        try {
+            userOperations = getSession().getUserOperations();
+            createUser();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public TestSession.CreateResult createUser (String name, String description, String category)
-            throws GeneralSecurityException, IOException {
+    @After
+    public void cleanup() {
+        try {
+            deleteUser(getUser());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public User createUserObject(String name, User.UserTypes category, String description) throws Exception {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(2048);
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
         PublicKey publicKey = new PublicKey(keyPair.getPublic());
-        String publicKeyPem = Utils.publicKeyToPemString(publicKey.getSecurityPublicKey());
 
-        TestSession.CreateResult createResult = new TestSession.CreateResult();
-        createResult.keyPair = keyPair;
-        createResult.result = getUserOperations().createUser(name, description, category, publicKeyPem);
-
-        return createResult;
-    }
-
-    @Test
-    public void testCreateUser () throws Exception {
-        getSession().connect();
-
-        TestSession.CreateResult createResult = createUser("stan","a test user", User.UserTypes.Publisher.toString());
-        assert (createResult.result == Results.Success);
-
-        Results result = getUserOperations().deleteUser("stan");
-        assert (result == Results.Success);
-    }
-
-    @Test
-    public void testListUsers () throws Exception {
-        getSession().connect();
-        UserOperations userOperations = getSession().getUserOperations();
-
-        List<User> userList = userOperations.listUsers();
-        assert (userList != null);
-    }
-
-    @Test
-    public void testDeleteUser () throws Exception {
-        getSession().connect();
-
-        TestSession.CreateResult createResult = createUser("stan", "a test user", User.UserTypes.Publisher.toString());
-        assert (createResult.result == Results.Success);
-
-        Results result = getUserOperations().deleteUser("stan");
-        assert (result == Results.Success);
-    }
-
-    public User createUser () throws GeneralSecurityException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-
-        PublicKey publicKey = new PublicKey(keyPair.getPublic());
-        User user = new User("whatever", User.UserTypes.Publisher, "a test user", publicKey);
+        User user = new User(name, category, description, publicKey);
         return user;
     }
 
+    public void deleteUser(User user) {
+        Results result = Results.Unknown;
+
+        try {
+            result = getUserOperations().delete(getSession().getSessionId(), user);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        assert (result == Results.Success || result == Results.UserNotFound);
+    }
 
     @Test
-    public void testModifyUser () throws Exception {
-        getSession().connect();
+    public void testListUsers() throws Exception {
+        ListObject listResult = userOperations.list(getSession().getSessionId());
+        assert (listResult != null);
+        assert (listResult.getResult() == Results.Success);
+        assert (listResult.getList().size() > 0);
+    }
 
-        TestSession.CreateResult createResult = createUser("stan", "a test user", User.UserTypes.Publisher.toString());
+    public void createUser() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-        User user = createUser();
-        user.setName("stan");
-        user.setDescription("modify");
+        PublicKey publicKey = new PublicKey(keyPair.getPublic());
+        this.user = new User("stan", User.UserTypes.Publisher, "a test user", publicKey);
 
-        Results result = getUserOperations().updateUser (user);
-        assert (result == Results.Success);
+        Results result = getUserOperations().create(getSession().getSessionId(), getUser());
 
-        Session.RetrieveUserResult retrieveUserResult = getUserOperations().retrieveUser("stan");
-        assert (retrieveUserResult.result == Results.Success);
-        assert (retrieveUserResult.user.getName().equals("stan"));
-        assert (retrieveUserResult.user.getDescription().equals("modify"));
-
-        result = getUserOperations().deleteUser("stan");
         assert (result == Results.Success);
     }
 
 
-    public void whatever () throws Exception {
-        getSession().connect();
-        UserOperations userOperations = getSession().getUserOperations();
+    @Test
+    public void testModifyUser() throws Exception {
+        getUser().setDescription("modify");
 
-        Results result = userOperations.deleteUser("stan");
+        Results result = getUserOperations().update(getSession().getSessionId(), getUser());
         assert (result == Results.Success);
+
+        ReadObject readResult = getUserOperations().read(getSession().getSessionId(), getUser());
+        assert (readResult.getResult() == Results.Success);
+        assert (((User) readResult.getObject()).getName().equals("stan"));
+        assert (((User) readResult.getObject()).getDescription().equals("modify"));
     }
 
     @Test
-    public void testGetUser () throws Exception {
-        getSession().connect();
-        UserOperations userOperations = getSession().getUserOperations();
-
-        Session.RetrieveUserResult retrieveUserResult = userOperations.retrieveUser("admin");
-        assert (retrieveUserResult.result == Results.Success);
-        assert (retrieveUserResult.user.getName().equals("admin"));
+    public void testReadUser() throws Exception {
+        ReadObject readObject = getUserOperations().read(getSession().getSessionId(), getUser());
+        assert (readObject.getResult() == Results.Success);
+        assert (((User) readObject.getObject()).getName().equals("stan"));
     }
 
 }

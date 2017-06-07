@@ -79,14 +79,6 @@ public class Topic extends StatusObject<Topic> implements Perishable {
         this.owner = owner;
     }
 
-    public Topic (String name, String owner, RemotePolicies remotePolicy) {
-        super(Status.New);
-
-        this.name = name;
-        this.owner = owner;
-        this.remotePolicy = remotePolicy;
-    }
-
     public void updateFrom (Topic other) {
         super.updateFrom(other);
 

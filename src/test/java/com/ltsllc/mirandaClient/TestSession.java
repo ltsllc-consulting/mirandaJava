@@ -78,6 +78,7 @@ public class TestSession extends TestCase {
 
     @Test
     public void testLogin () throws Exception {
+        getSession().connect();
         assert (getSession().getLoggedIn());
     }
 }

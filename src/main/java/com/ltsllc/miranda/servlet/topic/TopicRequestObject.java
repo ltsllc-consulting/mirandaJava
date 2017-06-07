@@ -25,6 +25,17 @@ import com.ltsllc.miranda.topics.Topic;
 public class TopicRequestObject extends RequestObject {
     private Topic topic;
 
+    public TopicRequestObject(String sessionIdString, Topic topic) {
+        super(sessionIdString);
+        this.topic = topic;
+    }
+
+    public TopicRequestObject (String sessionId, Object object) {
+        super(sessionId);
+        Topic topic = (Topic) object;
+        this.topic = topic;
+    }
+
     public Topic getTopic() {
         return topic;
     }
