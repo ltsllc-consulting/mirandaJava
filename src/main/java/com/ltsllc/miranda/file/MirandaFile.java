@@ -22,12 +22,9 @@ import com.ltsllc.miranda.Message;
 import com.ltsllc.miranda.Panic;
 import com.ltsllc.miranda.Version;
 import com.ltsllc.miranda.deliveries.Comparer;
-import com.ltsllc.miranda.file.messages.FileChangedMessage;
-import com.ltsllc.miranda.file.messages.WatchMessage;
 import com.ltsllc.miranda.miranda.Miranda;
 import com.ltsllc.miranda.miranda.messages.GarbageCollectionMessage;
 import com.ltsllc.miranda.reader.Reader;
-import com.ltsllc.miranda.util.Utils;
 import com.ltsllc.miranda.writer.Writer;
 import org.apache.log4j.Logger;
 
@@ -149,8 +146,7 @@ abstract public class MirandaFile extends Consumer implements Comparer {
 
     public void watch() {
         File file = new File(getFilename());
-        FileChangedMessage fileChangedMessage = new FileChangedMessage(getQueue(), this, file);
-        Miranda.fileWatcher.sendWatchMessage (getQueue(), this, file, fileChangedMessage);
+        Miranda.fileWatcher.sendWatchMessage (getQueue(), this, file);
     }
 
     public void updateVersion() throws NoSuchAlgorithmException {

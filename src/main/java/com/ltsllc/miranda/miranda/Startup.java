@@ -23,7 +23,6 @@ import com.ltsllc.miranda.deliveries.DeliveryManager;
 import com.ltsllc.miranda.event.EventManager;
 import com.ltsllc.miranda.file.FileWatcherService;
 import com.ltsllc.miranda.http.HttpServer;
-import com.ltsllc.miranda.http.SetupServletsMessage;
 import com.ltsllc.miranda.miranda.messages.GarbageCollectionMessage;
 import com.ltsllc.miranda.miranda.states.ReadyState;
 import com.ltsllc.miranda.network.Network;
@@ -57,7 +56,6 @@ import com.ltsllc.miranda.util.Utils;
 import com.ltsllc.miranda.writer.Writer;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -631,14 +629,16 @@ public class Startup extends State {
             String directoryName = properties.getProperty(MirandaProperties.PROPERTY_MESSAGES_DIRECTORY);
             File f = new File(directoryName);
             directoryName = f.getCanonicalPath();
-            EventManager eventManager = new EventManager(directoryName, getReader(), getWriter());
+            int objectLimit = properties.getIntProperty(MirandaProperties.PROPERTY_EVENT_OBJECT_LIMIT);
+            EventManager eventManager = new EventManager(directoryName, objectLimit, getReader(), getWriter());
             eventManager.start();
             miranda.setEventManager(eventManager);
 
             directoryName = properties.getProperty(MirandaProperties.PROPERTY_DELIVERY_DIRECTORY);
             f = new File(directoryName);
             directoryName = f.getCanonicalPath();
-            DeliveryManager deliveryManager = new DeliveryManager(directoryName, getReader(), getWriter());
+            objectLimit = properties.getIntProperty(MirandaProperties.PROPERTY_DELIVERY_OBJECT_LIMIT);
+            DeliveryManager deliveryManager = new DeliveryManager(directoryName, objectLimit, getReader(), getWriter());
             miranda.setDeliveryManager(deliveryManager);
 
         } catch (Exception e) {

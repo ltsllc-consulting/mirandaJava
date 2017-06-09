@@ -21,7 +21,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.ltsllc.miranda.Message;
 import com.ltsllc.miranda.MirandaException;
-import com.ltsllc.miranda.PublicKey;
 import com.ltsllc.miranda.file.SingleFile;
 import com.ltsllc.miranda.reader.Reader;
 import com.ltsllc.miranda.servlet.user.UserObject;
@@ -30,8 +29,6 @@ import com.ltsllc.miranda.user.states.UsersFileStartingState;
 import com.ltsllc.miranda.writer.Writer;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;

@@ -29,7 +29,8 @@ import com.ltsllc.miranda.reader.Reader;
 import com.ltsllc.miranda.util.Utils;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;

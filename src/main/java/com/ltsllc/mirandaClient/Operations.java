@@ -23,8 +23,6 @@ public abstract class Operations {
     abstract public RequestObject getRequestObject (String sessionId, Object object);
     abstract public String getCreateUrl ();
     abstract public String getReadUrl ();
-    abstract public String getUpdateUrl ();
-    abstract public String getDeleteUrl ();
     abstract public String getListUrl ();
     abstract public Type getReadObjectType();
 
@@ -105,45 +103,6 @@ public abstract class Operations {
         }
     }
 
-    public <T> Results update (String sessionId, T t) throws IOException {
-        String url = getUrl() + getUpdateUrl();
-        HttpPost httpPost = new HttpPost(url);
-
-        RequestObject requestObject = getRequestObject(sessionId, t);
-        String json = getGson().toJson(requestObject);
-
-        StringEntity stringEntity = new StringEntity(json);
-        httpPost.setEntity(stringEntity);
-
-        HttpResponse httpResponse = getHttpClient().execute(httpPost);
-        ResultObject resultObject = getReply(httpResponse, ResultObject.class);
-
-        if (null == resultObject) {
-            return Results.SessionNotFound;
-        } else {
-            return resultObject.getResult();
-        }
-    }
-
-    public <T> Results delete (String sessionId, T t) throws IOException {
-        String url = getUrl() + getDeleteUrl();
-        HttpPost httpPost = new HttpPost(url);
-
-        RequestObject requestObject = getRequestObject(sessionId, t);
-        String json = getGson().toJson(requestObject);
-
-        StringEntity stringEntity = new StringEntity(json);
-        httpPost.setEntity(stringEntity);
-
-        HttpResponse httpResponse = getHttpClient().execute(httpPost);
-        ResultObject resultObject = getReply(httpResponse, ResultObject.class);
-
-        if (null == resultObject) {
-            return Results.SessionNotFound;
-        } else {
-            return resultObject.getResult();
-        }
-    }
 
     public ListObject list (String sessionId) throws IOException {
         String url = getUrl() + getListUrl();

@@ -11,7 +11,7 @@ import java.lang.reflect.Type;
 /**
  * Created by Clark on 6/7/2017.
  */
-public class SubscriptionOperations extends Operations {
+public class SubscriptionOperations extends ReadWriteOperations {
     public SubscriptionOperations (Session session) {
         super(session);
     }

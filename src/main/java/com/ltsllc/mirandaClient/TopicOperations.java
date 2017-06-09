@@ -1,28 +1,19 @@
 package com.ltsllc.mirandaClient;
 
 import com.google.gson.reflect.TypeToken;
-import com.ltsllc.miranda.Results;
 import com.ltsllc.miranda.servlet.ReadObject;
 import com.ltsllc.miranda.servlet.objects.RequestObject;
 import com.ltsllc.miranda.servlet.objects.ResultObject;
 import com.ltsllc.miranda.servlet.topic.TopicRequestObject;
 import com.ltsllc.miranda.servlet.topic.TopicResultObject;
-import com.ltsllc.miranda.servlet.topic.TopicsResultObject;
 import com.ltsllc.miranda.topics.Topic;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 
-import javax.xml.transform.Result;
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Clark on 6/5/2017.
  */
-public class TopicOperations extends Operations {
+public class TopicOperations extends ReadWriteOperations {
     public TopicOperations (Session session) {
         super(session);
     }

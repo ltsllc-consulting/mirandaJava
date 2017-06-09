@@ -17,17 +17,13 @@
 package com.ltsllc.miranda.servlet.objects;
 
 import com.ltsllc.miranda.Results;
-import com.ltsllc.miranda.util.Utils;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 /**
  * Created by Clark on 4/7/2017.
  */
 public class ResultObject {
     private Results result;
-    private String additionalInfo;
+    private Throwable exception;
 
     public Results getResult() {
         return result;
@@ -37,21 +33,11 @@ public class ResultObject {
         this.result = result;
     }
 
-    public String getAddionalInfo() {
-        return  additionalInfo;
+    public Throwable getException() {
+        return exception;
     }
 
-    public void setAdditionalInfo(String additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-
-    public void setAdditionalInfo (Throwable throwable) {
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        throwable.printStackTrace(printWriter);
-        printWriter.close();
-        Utils.closeIgnoreExceptions(stringWriter);
-
-        this.additionalInfo = stringWriter.toString();
+    public void setException(Throwable exception) {
+        this.exception = exception;
     }
 }
