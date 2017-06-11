@@ -101,7 +101,7 @@ public class TestUserOperations extends TestSession {
 
         Results result = getUserOperations().create(getSession().getSessionId(), getUser());
 
-        assert (result == Results.Success);
+        assert (result == Results.Success || result == Results.Duplicate);
     }
 
 

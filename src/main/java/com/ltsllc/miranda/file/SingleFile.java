@@ -30,6 +30,7 @@ import com.ltsllc.miranda.util.Utils;
 import org.apache.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
@@ -43,7 +44,7 @@ import java.util.concurrent.BlockingQueue;
  */
 abstract public class SingleFile<E extends Updateable<E> & Matchable<E>> extends MirandaFile implements Comparer {
     abstract public List buildEmptyList();
-    abstract public Type listType();
+    abstract public Type getListType();
     abstract public void checkForDuplicates();
 
     private static Logger logger = Logger.getLogger(SingleFile.class);
@@ -52,34 +53,12 @@ abstract public class SingleFile<E extends Updateable<E> & Matchable<E>> extends
             .setPrettyPrinting()
             .create();
 
-    private boolean dirty;
-    private List<Subscriber> subscribers;
-
-    public List<Subscriber> getSubscribers() {
-        return subscribers;
-    }
-
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
     protected SingleFile () {}
 
-    public SingleFile(String filename, Reader reader, com.ltsllc.miranda.writer.Writer writer) {
+    public SingleFile(String filename, Reader reader, com.ltsllc.miranda.writer.Writer writer) throws IOException {
         super(filename, reader, writer);
 
         setDirty(false);
-        subscribers = new ArrayList<Subscriber>();
-    }
-
-    public void basicConstructor (String filename, Reader reader, com.ltsllc.miranda.writer.Writer writer) {
-        super.basicConstructor(filename, reader, writer);
-
-        subscribers = new ArrayList<Subscriber>();
     }
 
     private List<E> data = buildEmptyList();
@@ -101,7 +80,7 @@ abstract public class SingleFile<E extends Updateable<E> & Matchable<E>> extends
 
             try {
                 inputStreamReader = new InputStreamReader(byteArrayInputStream);
-                this.data = getGson().fromJson(inputStreamReader, listType());
+                this.data = getGson().fromJson(inputStreamReader, getListType());
             } catch (Exception e) {
                 Panic panic = new Panic("Exception loading list", e, Panic.Reasons.ExceptionLoadingFile);
                 Miranda.panicMiranda(panic);
@@ -134,7 +113,7 @@ abstract public class SingleFile<E extends Updateable<E> & Matchable<E>> extends
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
         InputStreamReader inputStreamReader = new InputStreamReader(byteArrayInputStream);
         List<E> temp = null;
-        temp = getGson().fromJson(inputStreamReader, listType());
+        temp = getGson().fromJson(inputStreamReader, getListType());
         setData(temp);
         updateVersion();
         setLastLoaded(System.currentTimeMillis());
@@ -245,22 +224,6 @@ abstract public class SingleFile<E extends Updateable<E> & Matchable<E>> extends
             if (queue == subscriber.getQueue())
                 getSubscribers().remove(subscriber);
         }
-    }
-
-    public void fireMessage (Message message) {
-        for (Subscriber subscriber : getSubscribers()) {
-            subscriber.notifySubscriber(message);
-        }
-    }
-    public void fireFileLoaded() {
-        FileLoadedMessage fileLoadedMessage = new FileLoadedMessage(getQueue(), this, getData());
-        fireMessage(fileLoadedMessage);
-    }
-
-    public void fireFileDoesNotExist () {
-        FileDoesNotExistMessage fileDoesNotExistMessage = new FileDoesNotExistMessage(getQueue(), this,
-                getFilename());
-        fireMessage(fileDoesNotExistMessage);
     }
 
     public void start() {

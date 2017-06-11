@@ -29,6 +29,7 @@ import com.ltsllc.miranda.user.states.UsersFileStartingState;
 import com.ltsllc.miranda.writer.Writer;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class UsersFile extends SingleFile<User> {
         ourInstance = usersFile;
     }
 
-    public UsersFile (com.ltsllc.miranda.reader.Reader reader, Writer writer, String filename) {
+    public UsersFile (com.ltsllc.miranda.reader.Reader reader, Writer writer, String filename) throws IOException {
         super(filename, reader, writer);
 
         UsersFileStartingState usersFileStartingState = new UsersFileStartingState(this);
@@ -81,7 +82,7 @@ public class UsersFile extends SingleFile<User> {
         }
     }
 
-    public static synchronized void initialize(String filename, Reader reader, Writer writer) {
+    public static synchronized void initialize(String filename, Reader reader, Writer writer) throws IOException {
         if (null == ourInstance) {
             ourInstance = new UsersFile(reader, writer, filename);
             ourInstance.start();
@@ -93,7 +94,7 @@ public class UsersFile extends SingleFile<User> {
         return new ArrayList<User>();
     }
 
-    public Type listType () {
+    public Type getListType() {
         return new TypeToken<ArrayList<User>>(){}.getType();
     }
 
@@ -184,7 +185,7 @@ public class UsersFile extends SingleFile<User> {
 
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
             InputStreamReader inputStreamReader = new InputStreamReader(byteArrayInputStream);
-            List<User> users = gson.fromJson(inputStreamReader, listType());
+            List<User> users = gson.fromJson(inputStreamReader, getListType());
 
             setData(users);
         }

@@ -48,6 +48,7 @@ import com.ltsllc.miranda.user.messages.NewUserMessage;
 import com.ltsllc.miranda.user.messages.UpdateUserMessage;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -80,7 +81,7 @@ public class Cluster extends Manager<Node, NodeElement> {
     }
 
 
-    public Cluster(Network network, String filename) {
+    public Cluster(Network network, String filename) throws IOException {
         super(NAME, filename);
 
         this.network = network;
@@ -104,7 +105,7 @@ public class Cluster extends Manager<Node, NodeElement> {
         return network;
     }
 
-    public SingleFile<NodeElement> createFile (String filename) {
+    public SingleFile<NodeElement> createFile (String filename) throws IOException {
         return new ClusterFile(filename, Miranda.getInstance().getReader(), Miranda.getInstance().getWriter(), getQueue());
     }
 

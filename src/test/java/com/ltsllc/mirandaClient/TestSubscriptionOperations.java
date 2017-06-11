@@ -47,7 +47,7 @@ public class TestSubscriptionOperations extends TestSession {
             Topic topic = new Topic("whatever", "admin");
             Results result = getSession().getTopicOperations().create(getSession().getSessionId(), topic);
             result = subscriptionOperations.create(getSession().getSessionId(), getSubscription());
-            assert (result == Results.Success);
+            assert (result == Results.Success || result == Results.Duplicate);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -275,7 +275,7 @@ public class Startup extends State {
             return new ReadyState(getMiranda());
         } catch (Exception e) {
             StartupPanic startupPanic = new StartupPanic("Exception during startup", e, StartupPanic.StartupReasons.StartupFailed);
-            Miranda.getInstance().panic(startupPanic);
+            Miranda.panicMiranda(startupPanic);
         }
 
         return StopState.getInstance();
@@ -569,9 +569,13 @@ public class Startup extends State {
         Network network = factory.buildNetwork(getKeyStore(), getTrustStore());
         network.start();
 
-        String filename = properties.getProperty(MirandaProperties.PROPERTY_CLUSTER_FILE);
-        Cluster cluster = new Cluster(miranda.getNetwork(), filename);
-        miranda.setCluster(cluster);
+        try {
+            String filename = properties.getProperty(MirandaProperties.PROPERTY_CLUSTER_FILE);
+            Cluster cluster = new Cluster(miranda.getNetwork(), filename);
+            miranda.setCluster(cluster);
+        } catch (IOException e) {
+            throw new MirandaException(e);
+        }
 
         SessionManager sessionManager = new SessionManager();
         sessionManager.start();
