@@ -29,11 +29,11 @@ import com.ltsllc.miranda.miranda.messages.GetVersionsMessage;
 import com.ltsllc.miranda.miranda.messages.StopMessage;
 import com.ltsllc.miranda.network.Network;
 import com.ltsllc.miranda.network.messages.SendNetworkMessage;
+import com.ltsllc.miranda.node.Conversation;
+import com.ltsllc.miranda.node.ConversationMessage;
 import com.ltsllc.miranda.node.NameVersion;
 import com.ltsllc.miranda.node.Node;
-import com.ltsllc.miranda.node.messages.GetClusterFileMessage;
-import com.ltsllc.miranda.node.messages.GetFileMessage;
-import com.ltsllc.miranda.node.messages.VersionMessage;
+import com.ltsllc.miranda.node.messages.*;
 import com.ltsllc.miranda.node.networkMessages.*;
 import com.ltsllc.miranda.subsciptions.SubscriptionsFile;
 import com.ltsllc.miranda.topics.TopicsFile;
@@ -53,9 +53,16 @@ public class NodeReadyState extends NodeState {
     private static Logger logger = Logger.getLogger(NodeReadyState.class);
 
     private Map<String, Version> versions = new HashMap<String, Version>();
+    private Map<String, Conversation> conversations;
 
     public NodeReadyState(Node node, Network network) {
         super(node, network);
+
+        this.conversations = new HashMap<String, Conversation>();
+    }
+
+    public Map<String, Conversation> getConversations() {
+        return conversations;
     }
 
     public Map<String, Version> getVersions() {
@@ -115,8 +122,6 @@ public class NodeReadyState extends NodeState {
                 break;
             }
 
-
-
             default: {
                 nextState = super.processNetworkMessage(networkMessage);
                 break;
@@ -130,6 +135,8 @@ public class NodeReadyState extends NodeState {
     @Override
     public State processMessage(Message message) {
         State nextState = this;
+
+        processConversations (message);
 
         switch (message.getSubject()) {
             case NetworkMessage: {
@@ -185,6 +192,18 @@ public class NodeReadyState extends NodeState {
                 break;
             }
 
+            case StartConversation: {
+                StartConversationMessage startConversationMessage = (StartConversationMessage) message;
+                nextState = processStartConversationMessage(startConversationMessage);
+                break;
+            }
+
+            case EndConversation: {
+                EndConversationMessage endConversationMessage = (EndConversationMessage) message;
+                nextState = processEndConversation(endConversationMessage);
+                break;
+            }
+
             default:
                 nextState = super.processMessage(message);
                 break;
@@ -193,6 +212,15 @@ public class NodeReadyState extends NodeState {
         return nextState;
     }
 
+    public void processConversations (Object object) {
+        if (!(object instanceof ConversationMessage))
+            return;
+
+        ConversationMessage conversationMessage = (ConversationMessage) object;
+        Conversation conversation = getConversations().get(conversationMessage.getKey());
+        if (null != conversation)
+            conversation.forwardMessage(conversationMessage);
+    }
 
     private State processVersionMessage(VersionMessage versionMessage) {
         getVersions().put(versionMessage.getNameVersion().getName(), versionMessage.getNameVersion().getVersion());
@@ -336,5 +364,18 @@ public class NodeReadyState extends NodeState {
 
         NodeStoppingState nodeStoppingState = new NodeStoppingState(getNode());
         return nodeStoppingState;
+    }
+
+    public State processStartConversationMessage (StartConversationMessage message) {
+        Conversation conversation = new Conversation (message.getKey(), message.getRespondTo());
+        getConversations().put(message.getKey(), conversation);
+
+        return getNode().getCurrentState();
+    }
+
+    public State processEndConversation (EndConversationMessage message) {
+        getConversations().remove(message.getKey());
+
+        return getNode().getCurrentState();
     }
 }

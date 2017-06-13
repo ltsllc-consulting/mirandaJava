@@ -25,6 +25,7 @@ public enum Results {
     TopicNotFound,
     Timeout,
     Exception,
+    NotPublisher,
     UserOwnsProperty,
     UserOwnsTopics,
     UserOwnsSubscriptions,
@@ -37,6 +38,8 @@ public enum Results {
     FileNotFound,
     ShortRead,
     UnrecognizedMethod,
-    NullResult
+    NullResult,
+    Acknowleged,
+    Written
 }
 

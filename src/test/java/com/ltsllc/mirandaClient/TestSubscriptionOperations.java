@@ -3,7 +3,6 @@ package com.ltsllc.mirandaClient;
 import com.ltsllc.miranda.Results;
 import com.ltsllc.miranda.servlet.ReadObject;
 import com.ltsllc.miranda.subsciptions.Subscription;
-import com.ltsllc.miranda.test.TestCase;
 import com.ltsllc.miranda.topics.Topic;
 import org.junit.After;
 import org.junit.Before;

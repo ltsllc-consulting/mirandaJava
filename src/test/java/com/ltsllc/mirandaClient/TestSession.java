@@ -1,7 +1,6 @@
 package com.ltsllc.mirandaClient;
 
 import com.ltsllc.miranda.PrivateKey;
-import com.ltsllc.miranda.PublicKey;
 import com.ltsllc.miranda.Results;
 import com.ltsllc.miranda.test.TestCase;
 import com.ltsllc.miranda.user.User;
@@ -9,13 +8,10 @@ import com.ltsllc.miranda.util.Utils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.util.List;
 
 /**
  * Created by Clark on 6/2/2017.
